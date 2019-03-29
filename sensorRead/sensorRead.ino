@@ -1,4 +1,3 @@
-#include <string.h>
 void setup()
 {
   Serial.begin(115200);
@@ -53,11 +52,9 @@ String receivePacket(char *packet, int data)
     //Serial.println(data);
     pointer = 3;
     break;
-  case 3:
+  default:
     //Serial.println(data);
     pointer = 5;
-    break;
-  default:
     break;
   }
   while (pointer >= 0)
