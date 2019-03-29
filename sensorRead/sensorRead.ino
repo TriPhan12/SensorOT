@@ -17,16 +17,17 @@ void loop()
   {
     //wait for serial port to connect.
   }
-  Serial.println("Day la so byte: ");
-  Serial.println(receivePacket("2 bytes from fdde:ad00:beef:0:cf3c:df09:f013:55a1 14152 Hello,World!", 1));
-  Serial.println("Day la source address: ");
-  Serial.println(receivePacket("2 bytes from fdde:ad00:beef:0:cf3c:df09:f013:55a1 14152 Hello,World!", 2));
-  Serial.println("Day la message: ");
-  Serial.println(receivePacket("2 bytes from fdde:ad00:beef:0:cf3c:df09:f013:55a1 14152 Hello,World!", 3));
-
+  Serial.print("Day la so byte: ");
+  receiveByte = receivePacket("2 bytes from fdde:ad00:beef:0:cf3c:df09:f013:55a1 14152 Hello,World!", 1).toInt();
+  Serial.println(receiveByte);
+  Serial.print("Day la source address: ");
+  sourceAddress = receivePacket("2 bytes from fdde:ad00:beef:0:cf3c:df09:f013:55a1 14152 Hello,World!", 2);
+  Serial.println(sourceAddress);
+  Serial.print("Day la message: ");
+  receiveMessage = receivePacket("2 bytes from fdde:ad00:beef:0:cf3c:df09:f013:55a1 14152 Hello,World!", 3);
+  Serial.println(receiveMessage);
   while (1)
   {
-    delay(1000);
   }
 }
 
@@ -36,13 +37,14 @@ String receivePacket(char *packet, int data)
   receivePacket(packet);
   Examble:
   receivePacket("2 bytes from fdde:ad00:beef:0:cf3c:df09:f013:55a1 14152 Hello,World!", 1);
-                 ! -> pointer = 0                                                       ! 1 for data at pointer 0
-                              ! -> pointer = 3                                          ! 2 for data at pointer 3
-                                                                         ! -> pointer = 5|3 for data at pointer 5
+                 ! -> pointer = 0                                                       ! 1 for data at pointer 0 (bytes sent)
+                              ! -> pointer = 3                                          ! 2 for data at pointer 3 (source address)
+                                                                         ! -> pointer = 5|3 for data at pointer 5 (message)
   */
-  int pointer = 0;
+  int pointer = 5;
   String tampont = "";
   int i = 0;
+
   switch (data)
   {
   case 1:
@@ -57,21 +59,31 @@ String receivePacket(char *packet, int data)
     pointer = 5;
     break;
   }
-  while (pointer >= 0)
+
+  while (pointer > 0)
   {
-    if ((pointer != 0)|| (packet[i] == ' '))
+    if (packet[i] == ' ') //if appeare a ' ' in sentence reduce pointer => enter a new word
     {
-      pointer = pointer - 1;
+      pointer = pointer - 1; //decrease pointer by 1 to get to value 0
     }
-    else if ((pointer == 0) || (packet[i] != ' '))
+    i = i + 1; //increase i to go to next charactor
+  }
+  while (pointer == 0)
+  {
+    if (packet[i] != ' ')
     {
       tampont = tampont + packet[i]; //when not reach " " symbol add char to buffer
-      //Serial.println(tampont);      
+      //Serial.println(tampont);
     }
-    else if ((pointer == 0) || (packet[i] == ' ')){
-      pointer = pointer -1;
-    }  
-    i = i + 1;
+    else
+    {
+      pointer = pointer - 1; // decrease pointer to value -1 to escape from the while loop
+    }
+    i = i + 1; //increase i to go to next charactor
+  }
+  if (data == 3) //only remove 3 charactors at the end of the message
+  {
+    tampont.remove(tampont.length() - 3, 3);
   }
   return tampont;
 }
@@ -86,7 +98,6 @@ sendPacket("fdde:ad00:beef::....","Hello,World!");
   Serial.print("udp send ");
   Serial.print(destIpv6Addr);
   Serial.print(" 1212 "); //print the UDP port, this case uses port 1212
-  Serial.print(message);
-  Serial.write(0x03); //0x03 a.k.a "End of text" in UTF-8
-  Serial.println();
+  Serial.println(message);
+  //Serial.write(0x03); //0x03 a.k.a "End of text" in UTF-8
 }
