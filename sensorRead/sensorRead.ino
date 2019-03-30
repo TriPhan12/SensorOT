@@ -1,3 +1,7 @@
+#include "DHT.h"
+
+#define tempProbe 2
+#define DHTTYPE DHT11
 void setup()
 {
   Serial.begin(115200);
