@@ -1,10 +1,15 @@
-#include "DHT.h"
+#include <DHT.h>
 
+//Setup for the temperature sensor DHT11
 #define tempProbe 2
 #define DHTTYPE DHT11
+DHT dht(tempProbe,DHTTYPE);
+
 void setup()
 {
   Serial.begin(115200);
+  
+  dht.begin();
 }
 //Global variable
 String sourceAddress = "", receiveMessage = "";
@@ -14,25 +19,16 @@ String receivePacket();
 void sendPacket();
 void formatPrint();
 char getData();
+void tempget();
+float humiget();
 
 void loop()
 {
   while (!Serial)
   {
     //wait for serial port to connect.
-  }
-  Serial.print("Day la so byte: ");
-  receiveByte = receivePacket("2 bytes from fdde:ad00:beef:0:cf3c:df09:f013:55a1 14152 Hello,World!", 1).toInt();
-  Serial.println(receiveByte);
-  Serial.print("Day la source address: ");
-  sourceAddress = receivePacket("2 bytes from fdde:ad00:beef:0:cf3c:df09:f013:55a1 14152 Hello,World!", 2);
-  Serial.println(sourceAddress);
-  Serial.print("Day la message: ");
-  receiveMessage = receivePacket("2 bytes from fdde:ad00:beef:0:cf3c:df09:f013:55a1 14152 Hello,World!", 3);
-  Serial.println(receiveMessage);
-  while (1)
-  {
-  }
+  }  
+  tempget();
 }
 
 String receivePacket(char *packet, int data)
@@ -94,7 +90,7 @@ String receivePacket(char *packet, int data)
 
 void sendPacket(char *destIpv6Addr, char *message)
 {
-  /*How-to-use
+/*How-to-use
 sendPacket("address in IPv6","message");
 Examble:
 sendPacket("fdde:ad00:beef::....","Hello,World!");
@@ -104,4 +100,19 @@ sendPacket("fdde:ad00:beef::....","Hello,World!");
   Serial.print(" 1212 "); //print the UDP port, this case uses port 1212
   Serial.println(message);
   //Serial.write(0x03); //0x03 a.k.a "End of text" in UTF-8
+}
+
+void tempget(){
+  float temp = dht.readTemperature();
+  float humi = dht.readHumidity();
+  if (isnan(temp) || isnan(humi)) {
+          Serial.println("Failed to read from DHT sensor!");
+  }else{
+          Serial.print("Nhiet do ");
+          Serial.print(String(temp, 1).c_str());
+          Serial.print("      Do am");
+          Serial.println(String(humi, 1).c_str());
+  }  
+  //return temp;
+  delay(500);
 }
