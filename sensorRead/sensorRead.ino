@@ -14,6 +14,8 @@ void setup()
 //Global variable
 String sourceAddress = "", receiveMessage = "";
 int receiveByte = 0;
+
+ 
 //Functions
 String receivePacket();
 void sendPacket();
@@ -28,7 +30,15 @@ void loop()
   {
     //wait for serial port to connect.
   }  
-  tempget();
+  float doam = humiget();
+  //Serial.println(doamChuoi);
+  String doamChuoi = "doam";
+  doamChuoi = doamChuoi + doam;
+  char chuoiXuat;
+  doamChuoi.toCharArray(chuoiXuat, 9);
+  Serial.println(chuoiXuat);
+  doamChuoi = "";
+  sendPacket("fdde:ad00:beef:0:cf3c:df09:f013:55a1", chuoiXuat );
 }
 
 String receivePacket(char *packet, int data)
@@ -104,15 +114,23 @@ sendPacket("fdde:ad00:beef::....","Hello,World!");
 
 void tempget(){
   float temp = dht.readTemperature();
-  float humi = dht.readHumidity();
-  if (isnan(temp) || isnan(humi)) {
-          Serial.println("Failed to read from DHT sensor!");
+  /*
+  if (isnan(temp)) {
+          Serial.println("Failed to read temperature from DHT sensor!");
   }else{
           Serial.print("Nhiet do ");
           Serial.print(String(temp, 1).c_str());
-          Serial.print("      Do am");
+          Serial.print("      Do am ");
           Serial.println(String(humi, 1).c_str());
   }  
-  //return temp;
-  delay(500);
+  //return temp;*/
+}
+
+float humiget(){
+  float humi = dht.readHumidity();
+
+  if (isnan(humi)) {
+    humi = 0x00;
+  }
+  return humi;
 }
