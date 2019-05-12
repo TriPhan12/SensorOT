@@ -30,6 +30,7 @@ void loop()
   {
     //wait for serial port to connect.
   }  
+  delay(1000);
   float doam = humiget();
   //Serial.println(doamChuoi);
   String doamChuoi = "doam";
