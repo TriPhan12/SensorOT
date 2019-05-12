@@ -7,16 +7,17 @@ DHT dht(tempProbe,DHTTYPE);
 
 void setup()
 {
-  Serial.begin(115200);
-  
+  Serial.begin(115200);  
+
   dht.begin();
 }
 //Global variable
 String sourceAddress = "", receiveMessage = "";
 int receiveByte = 0;
 
- 
+
 //Functions
+void guiDoam();
 String receivePacket();
 void sendPacket();
 void formatPrint();
@@ -29,8 +30,13 @@ void loop()
   while (!Serial)
   {
     //wait for serial port to connect.
-  }  
+  }
+  
   delay(1000);
+  guiDoam();
+}
+
+void guiDoam(){  
   float doam = humiget();
   //Serial.println(doamChuoi);
   String doamChuoi = "doam";
