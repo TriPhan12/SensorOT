@@ -43,7 +43,7 @@ void guiDoam(){
   doamChuoi = doamChuoi + doam;
   char chuoiXuat;
   doamChuoi.toCharArray(chuoiXuat, 9);
-  Serial.println(chuoiXuat);
+  // Serial.println(chuoiXuat);
   doamChuoi = "";
   sendPacket("fdde:ad00:beef:0:cf3c:df09:f013:55a1", chuoiXuat );
 }
