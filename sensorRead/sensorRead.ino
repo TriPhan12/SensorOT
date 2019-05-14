@@ -25,6 +25,20 @@ char getData();
 void tempget();
 float humiget();
 
+void sendPacket2(char *destIpv6Addr, char *message)
+{
+/*How-to-use
+sendPacket("address in IPv6","message");
+Examble:
+sendPacket("fdde:ad00:beef::....","Hello,World!");
+*/
+  // Serial.print("udp send ");
+  Serial.print(destIpv6Addr);
+  // Serial.print(" 1212 "); //print the UDP port, this case uses port 1212
+  Serial.println(message);
+  //Serial.write(0x03); //0x03 a.k.a "End of text" in UTF-8
+}
+
 void loop()
 {
   while (!Serial)
@@ -33,9 +47,9 @@ void loop()
   }
   
   delay(1000);
-  guiDoam();
-  delay(2000)
-  sendPacket("fdde:ad00:beef:0:cf3c:df09:f013:55a1", 'humi12')
+//  guiDoam();
+  delay(2000);
+  sendPacket2("2 bytes from fdde:ad00:beef:0:cf3c:df09:f013:55a1 14152", " humi_12.56");
 }
 
 void guiDoam(){  
@@ -43,10 +57,10 @@ void guiDoam(){
   //Serial.println(doamChuoi);
   String doamChuoi = "doam";
   doamChuoi = doamChuoi + doam;
+  doamChuoi = "doam_36.23";
   char chuoiXuat;
   doamChuoi.toCharArray(chuoiXuat, 9);
   // Serial.println(chuoiXuat);
-  chuoiXuat = 'doam78.23'
   doamChuoi = "";
   sendPacket("fdde:ad00:beef:0:cf3c:df09:f013:55a1", chuoiXuat );
 }
