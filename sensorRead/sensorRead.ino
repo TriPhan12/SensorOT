@@ -34,6 +34,8 @@ void loop()
   
   delay(1000);
   guiDoam();
+  delay(2000)
+  sendPacket("fdde:ad00:beef:0:cf3c:df09:f013:55a1", 'humi12')
 }
 
 void guiDoam(){  
@@ -44,6 +46,7 @@ void guiDoam(){
   char chuoiXuat;
   doamChuoi.toCharArray(chuoiXuat, 9);
   // Serial.println(chuoiXuat);
+  chuoiXuat = 'doam78.23'
   doamChuoi = "";
   sendPacket("fdde:ad00:beef:0:cf3c:df09:f013:55a1", chuoiXuat );
 }
