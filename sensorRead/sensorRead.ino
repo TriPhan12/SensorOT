@@ -20,25 +20,10 @@ int receiveByte = 0;
 void guiDoam();
 String receivePacket();
 void sendPacket();
-void formatPrint();
 char getData();
 void tempget();
 float humiget();
 void setupUDP();
-
-void sendPacket2(char *destIpv6Addr, char *message)
-{
-/*How-to-use
-sendPacket("address in IPv6","message");
-Examble:
-sendPacket("fdde:ad00:beef::....","Hello,World!");
-*/
-  // Serial.print("udp send ");
-  Serial.print(destIpv6Addr);
-  // Serial.print(" 1212 "); //print the UDP port, this case uses port 1212
-  Serial.println(message);
-  //Serial.write(0x03); //0x03 a.k.a "End of text" in UTF-8
-}
 
 void loop()
 {
@@ -46,12 +31,14 @@ void loop()
   {
     //wait for serial port to connect.
   }
-<<<<<<< HEAD
   delay(1000);
   setupUDP();
-  guiDoam();
-  delay(2000);
-  // sendPacket2("2 bytes from fdde:ad00:beef:0:cf3c:df09:f013:55a1 14152", " humi_12.56");
+  while ((tempget() != 0x00 ) && (humiget() != 0x00))
+  {
+    guiDoam();
+    delay(2000);
+  }
+  
 }
 
 void setupUDP(){
@@ -59,13 +46,6 @@ void setupUDP(){
   delay(100)
   Serial.println("udp bind :: 1212");
   delay(100);
-=======
-  
-  delay(1000);
-//  guiDoam();
-  delay(2000);
-  sendPacket2("2 bytes from fdde:ad00:beef:0:cf3c:df09:f013:55a1 14152", " humi_12.56");
->>>>>>> d861786e8e4bd17b630f0ad898b175faa4cb7922
 }
 
 void guiDoam(){  
@@ -164,21 +144,14 @@ void sendPacket(char *message)
 
 void tempget(){
   float temp = dht.readTemperature();
-  /*
-  if (isnan(temp)) {
-          Serial.println("Failed to read temperature from DHT sensor!");
-  }else{
-          Serial.print("Nhiet do ");
-          Serial.print(String(temp, 1).c_str());
-          Serial.print("      Do am ");
-          Serial.println(String(humi, 1).c_str());
-  }  
-  //return temp;*/
+  if (isnan(temp)){
+    temp = 0x00;
+  }
+  return temp;
 }
 
 float humiget(){
   float humi = dht.readHumidity();
-
   if (isnan(humi)) {
     humi = 0x00;
   }
