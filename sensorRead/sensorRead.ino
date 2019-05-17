@@ -18,10 +18,11 @@ int receiveByte = 0;
 
 //Functions
 void guiDoam();
+void guiNhietdo();
 String receivePacket();
 void sendPacket();
 char getData();
-void tempget();
+float tempget();
 float humiget();
 void setupUDP();
 
@@ -37,26 +38,41 @@ void loop()
   {
     guiDoam();
     delay(2000);
-  }
-  
+    guiNhietdo();
+    delay(1000);
+  }  
 }
 
 void setupUDP(){
   Serial.println("udp open");
-  delay(100)
+  delay(100);
   Serial.println("udp bind :: 1212");
   delay(100);
 }
 
-void guiDoam(){  
+void guiDoam(){
+  /*
+  Function: send humidity data read from DHT11 sensor to CC2538 via physical UART port
+  Usage: guiDoam();
+  */  
   float doam = humiget();
-  String doamChuoi = "doam_";
+  String doamChuoi = "doam1_";
   doamChuoi = doamChuoi + doam;
   // doamChuoi = "doam_36.23";
-  char chuoiXuat[11];
-  doamChuoi.toCharArray(chuoiXuat, 11);
+  char chuoiXuat[12];
+  doamChuoi.toCharArray(chuoiXuat, 12);
   // Serial.println(chuoiXuat);
   doamChuoi = "";
+  sendPacket(chuoiXuat);
+}
+
+void guiNhietdo(){  
+  float nhietdo = tempget();
+  String nhietdoChuoi = "nhietdo1_";
+  nhietdoChuoi = nhietdoChuoi + nhietdo;
+  char chuoiXuat[15];
+  nhietdoChuoi.toCharArray(chuoiXuat, 15);
+  nhietdoChuoi = "";
   sendPacket(chuoiXuat);
 }
 
@@ -138,11 +154,11 @@ void sendPacket(char *message)
   Function: send mesage to multicast address at port 1212
   Usage: sendPacket("doam1_60.23")
     */
-  Serial.print("udp send ff03:: 1212 ");  
+  Serial.print("udp send ff03::1 1212 ");  
   Serial.println(message);
 }
 
-void tempget(){
+float tempget(){
   float temp = dht.readTemperature();
   if (isnan(temp)){
     temp = 0x00;
