@@ -72,15 +72,9 @@ void guiDoam(){
   float doam = humiget();
   String doamChuoi = "doam_";
   doamChuoi = doamChuoi + doam;
-<<<<<<< HEAD
   // doamChuoi = "doam_36.23";
   char chuoiXuat[11];
   doamChuoi.toCharArray(chuoiXuat, 11);
-=======
-  doamChuoi = "doam_36.23";
-  char chuoiXuat;
-  doamChuoi.toCharArray(chuoiXuat, 9);
->>>>>>> d861786e8e4bd17b630f0ad898b175faa4cb7922
   // Serial.println(chuoiXuat);
   doamChuoi = "";
   sendPacket(chuoiXuat);
