@@ -7,38 +7,55 @@ DHT dht(tempProbe,DHTTYPE);
 
 void setup()
 {
-  Serial.begin(115200);
-  
+  Serial.begin(115200);  
+
   dht.begin();
 }
 //Global variable
 String sourceAddress = "", receiveMessage = "";
 int receiveByte = 0;
 
- 
+
 //Functions
+void guiDoam();
 String receivePacket();
 void sendPacket();
 void formatPrint();
 char getData();
 void tempget();
 float humiget();
+void setupUDP();
 
 void loop()
 {
   while (!Serial)
   {
     //wait for serial port to connect.
-  }  
+  }
+  delay(1000);
+  setupUDP();
+  guiDoam();
+  delay(2000);
+  // sendPacket2("2 bytes from fdde:ad00:beef:0:cf3c:df09:f013:55a1 14152", " humi_12.56");
+}
+
+void setupUDP(){
+  Serial.println("udp open");
+  delay(100)
+  Serial.println("udp bind :: 1212");
+  delay(100);
+}
+
+void guiDoam(){  
   float doam = humiget();
-  //Serial.println(doamChuoi);
-  String doamChuoi = "doam";
+  String doamChuoi = "doam_";
   doamChuoi = doamChuoi + doam;
-  char chuoiXuat;
-  doamChuoi.toCharArray(chuoiXuat, 9);
-  Serial.println(chuoiXuat);
+  // doamChuoi = "doam_36.23";
+  char chuoiXuat[11];
+  doamChuoi.toCharArray(chuoiXuat, 11);
+  // Serial.println(chuoiXuat);
   doamChuoi = "";
-  sendPacket("fdde:ad00:beef:0:cf3c:df09:f013:55a1", chuoiXuat );
+  sendPacket(chuoiXuat);
 }
 
 String receivePacket(char *packet, int data)
@@ -98,18 +115,29 @@ String receivePacket(char *packet, int data)
   return tampont;
 }
 
+/*
 void sendPacket(char *destIpv6Addr, char *message)
 {
-/*How-to-use
-sendPacket("address in IPv6","message");
-Examble:
-sendPacket("fdde:ad00:beef::....","Hello,World!");
-*/
+//// How-to-use: genaral destination message sending function
+//// sendPacket("address in IPv6","message");
+//// Examble:
+//// sendPacket("fdde:ad00:beef::....","Hello,World!");
+
   Serial.print("udp send ");
   Serial.print(destIpv6Addr);
   Serial.print(" 1212 "); //print the UDP port, this case uses port 1212
   Serial.println(message);
   //Serial.write(0x03); //0x03 a.k.a "End of text" in UTF-8
+}
+*/
+void sendPacket(char *message)
+{
+  /*
+  Function: send mesage to multicast address at port 1212
+  Usage: sendPacket("doam1_60.23")
+    */
+  Serial.print("udp send ff03:: 1212 ");  
+  Serial.println(message);
 }
 
 void tempget(){
