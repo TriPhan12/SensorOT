@@ -39,7 +39,7 @@ void loop()
     guiDoam();
     delay(2000);
     guiNhietdo();
-    delay(1000);
+    delay(3000);
   }  
 }
 
@@ -68,7 +68,7 @@ void guiDoam(){
 
 void guiNhietdo(){  
   float nhietdo = tempget();
-  String nhietdoChuoi = "nhietdo1_";
+  String nhietdoChuoi = "temp_";
   nhietdoChuoi = nhietdoChuoi + nhietdo;
   char chuoiXuat[15];
   nhietdoChuoi.toCharArray(chuoiXuat, 15);
