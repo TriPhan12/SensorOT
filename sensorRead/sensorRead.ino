@@ -1,20 +1,18 @@
 #include <DHT.h>
+#include <NeoHWSerial.h>
 
 //Setup for the temperature sensor DHT11
 #define tempProbe 2
 #define DHTTYPE DHT11
-DHT dht(tempProbe,DHTTYPE);
+DHT dht(tempProbe, DHTTYPE);
 
-void setup()
-{
-  Serial.begin(115200);  
-
-  dht.begin();
-}
 //Global variable
-String sourceAddress = "", receiveMessage = "";
-int receiveByte = 0;
 
+String receiveMessage = "";
+// String sourceAddress = "";
+int receiveByte = 0;
+String receiveMessageData;
+static volatile uint16_t count = 0;
 
 //Functions
 void guiDoam();
@@ -25,48 +23,111 @@ char getData();
 float tempget();
 float humiget();
 void setupUDP();
+static void char_received();
+String getMessage();
+String getMessageData();
+
+void setup()
+{
+  NeoSerial.begin(115200);
+  NeoSerial.attachInterrupt(char_received);
+  dht.begin();
+}
 
 void loop()
 {
-  while (!Serial)
+  while (!NeoSerial)
   {
     //wait for serial port to connect.
   }
   delay(1000);
   setupUDP();
-  while ((tempget() != 0x00 ) && (humiget() != 0x00))
+  if ((tempget() != 0x00) && (humiget() != 0x00))
   {
     guiDoam();
-    delay(2000);
     guiNhietdo();
-    delay(3000);
-  }  
+    delay(100);
+  }
+
+  NeoSerial.println(getMessageData());
 }
 
-void setupUDP(){
-  Serial.println("udp open");
+String getMessageData(){
+  /*
+  Function: Return the received broadcasting message in Thread network
+  */ 
+  char chuoiMessage;
+  String message = getMessage();
+  message.toCharArray(chuoiMessage, 70);
+  String data = processReceiveMessage(chuoiMessage, 3); //3 for getting message data
+  NeoSerial.println("-----------------------------");
+  NeoSerial.println(data);
+  return data;
+}
+
+String getMessage()
+{
+  ///Setting up for ISR (Interrupt Service Routetine)
+  uint8_t oldSREG = SREG;
+  noInterrupts();
+  uint16_t old_count = count;
+  count = 0;
+  SREG = oldSREG;
+  if (old_count)
+  {
+    NeoSerial.print("\nPayload received: ");
+    NeoSerial.println(old_count - 2); //result is added to 2
+    NeoSerial.print("Message receive: ");
+    NeoSerial.println(receiveMessage);
+  }
+  else
+  {
+    NeoSerial.flush();
+    receiveMessage = "";
+  }
+  return receiveMessage;
+}
+
+static void char_received(uint8_t c)
+{
+  // This is a little naughty, as it will try to block
+  //   in this ISR if the tx_buffer is full.  For this example,
+  //   we are only sending as many characters as we have received,
+  //   and they arrive at the same rate we are sending them.
+  char raw = (char)c;
+  receiveMessage += raw;
+  // NeoSerial.print(raw);
+  // NeoSerial.write(c);
+  count++;
+}
+
+void setupUDP()
+{
+  NeoSerial.println("udp open");
   delay(100);
-  Serial.println("udp bind :: 1212");
+  NeoSerial.println("udp bind :: 1212");
   delay(100);
 }
 
-void guiDoam(){
+void guiDoam()
+{
   /*
   Function: send humidity data read from DHT11 sensor to CC2538 via physical UART port
   Usage: guiDoam();
-  */  
+  */
   float doam = humiget();
   String doamChuoi = "doam1_";
   doamChuoi = doamChuoi + doam;
   // doamChuoi = "doam_36.23";
   char chuoiXuat[12];
   doamChuoi.toCharArray(chuoiXuat, 12);
-  // Serial.println(chuoiXuat);
+  // NeoSerial.println(chuoiXuat);
   doamChuoi = "";
   sendPacket(chuoiXuat);
 }
 
-void guiNhietdo(){  
+void guiNhietdo()
+{
   float nhietdo = tempget();
   String nhietdoChuoi = "temp_";
   nhietdoChuoi = nhietdoChuoi + nhietdo;
@@ -76,7 +137,7 @@ void guiNhietdo(){
   sendPacket(chuoiXuat);
 }
 
-String receivePacket(char *packet, int data)
+String processReceiveMessage(char *packet, int data)
 {
   /*How-to-use
   receivePacket(packet);
@@ -96,11 +157,11 @@ String receivePacket(char *packet, int data)
     pointer = 0;
     break;
   case 2:
-    //Serial.println(data);
+    //NeoSerial.println(data);
     pointer = 3;
     break;
   default:
-    //Serial.println(data);
+    //NeoSerial.println(data);
     pointer = 5;
     break;
   }
@@ -118,7 +179,7 @@ String receivePacket(char *packet, int data)
     if (packet[i] != ' ')
     {
       tampont = tampont + packet[i]; //when not reach " " symbol add char to buffer
-      //Serial.println(tampont);
+      //NeoSerial.println(tampont);
     }
     else
     {
@@ -141,11 +202,11 @@ void sendPacket(char *destIpv6Addr, char *message)
 //// Examble:
 //// sendPacket("fdde:ad00:beef::....","Hello,World!");
 
-  Serial.print("udp send ");
-  Serial.print(destIpv6Addr);
-  Serial.print(" 1212 "); //print the UDP port, this case uses port 1212
-  Serial.println(message);
-  //Serial.write(0x03); //0x03 a.k.a "End of text" in UTF-8
+  NeoSerial.print("udp send ");
+  NeoSerial.print(destIpv6Addr);
+  NeoSerial.print(" 1212 "); //print the UDP port, this case uses port 1212
+  NeoSerial.println(message);
+  //NeoSerial.write(0x03); //0x03 a.k.a "End of text" in UTF-8
 }
 */
 void sendPacket(char *message)
@@ -154,21 +215,25 @@ void sendPacket(char *message)
   Function: send mesage to multicast address at port 1212
   Usage: sendPacket("doam1_60.23")
     */
-  Serial.print("udp send ff03::1 1212 ");  
-  Serial.println(message);
+  NeoSerial.print("udp send ff03::1 1212 ");
+  NeoSerial.println(message);
 }
 
-float tempget(){
+float tempget()
+{
   float temp = dht.readTemperature();
-  if (isnan(temp)){
+  if (isnan(temp))
+  {
     temp = 0x00;
   }
   return temp;
 }
 
-float humiget(){
+float humiget()
+{
   float humi = dht.readHumidity();
-  if (isnan(humi)) {
+  if (isnan(humi))
+  {
     humi = 0x00;
   }
   return humi;
