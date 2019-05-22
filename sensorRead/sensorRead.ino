@@ -4,8 +4,8 @@
 //Setup for the temperature sensor DHT11
 #define tempProbe 2
 #define DHTTYPE DHT11
+#define den1 8
 DHT dht(tempProbe, DHTTYPE);
-
 //Global variable
 
 String receiveMessage = "";
@@ -13,6 +13,8 @@ String receiveMessage = "";
 int receiveByte = 0;
 String receiveMessageData;
 static volatile uint16_t count = 0;
+const String moden1 = "groundfloor/light_ON";
+const String tatden1 = "groundfloor/light_OFF";
 
 //Functions
 void guiDoam();
@@ -32,6 +34,9 @@ void setup()
   NeoSerial.begin(115200);
   NeoSerial.attachInterrupt(char_received);
   dht.begin();
+  pinMode(den1, OUTPUT); // set pin to output  
+  delay(1000);
+  setupUDP();
 }
 
 void loop()
@@ -40,30 +45,56 @@ void loop()
   {
     //wait for serial port to connect.
   }
-  delay(1000);
-  setupUDP();
   if ((tempget() != 0x00) && (humiget() != 0x00))
   {
     guiDoam();
     guiNhietdo();
-    delay(100);
+    delay(6000);
   }
-
-  NeoSerial.println(getMessageData());
+  if (receiveMessage != "")
+  {
+    // String goitin = getMessage();
+    String goitin = receiveMessage;
+    // NeoSerial.println(goitin);
+    receiveMessage = "";
+    char goitinChuoi[90];
+    goitin.toCharArray(goitinChuoi, 90);
+    // NeoSerial.println("Chuoi:");
+    // NeoSerial.write(goitinChuoi);
+    String noidung = processReceiveMessage(goitinChuoi);
+    // String noidung = getMessageData(goitin);
+    NeoSerial.println(noidung);
+    NeoSerial.print("Noi dung lenght: ");
+    NeoSerial.println(noidung.length());
+    if (noidung == moden1)
+    {
+      digitalWrite(den1, HIGH); // turn on pullup resistors
+      NeoSerial.println("Da mo den tang tret!");
+    }
+    else if (noidung == tatden1)
+    {
+      digitalWrite(den1, LOW); // turn off pullup resistors
+      NeoSerial.println("Da tat den tang tret!");
+    }
+  }
 }
 
-String getMessageData(){
-  /*
-  Function: Return the received broadcasting message in Thread network
-  */ 
-  char chuoiMessage;
-  String message = getMessage();
-  message.toCharArray(chuoiMessage, 70);
-  String data = processReceiveMessage(chuoiMessage, 3); //3 for getting message data
-  NeoSerial.println("-----------------------------");
-  NeoSerial.println(data);
-  return data;
-}
+// String getMessageData(String goitin)
+// {
+//   /*
+//   Function: Return the received broadcasting message in Thread network
+//   */
+//   char chuoiMessage;
+//   NeoSerial.print("noidung: ");
+//   NeoSerial.println(goitin);
+//   goitin.toCharArray(chuoiMessage, 70);
+//   String data = processReceiveMessage(chuoiMessage, 3); //3 for getting message data
+//   NeoSerial.println("-----------------------------");
+//   NeoSerial.println(data);
+// Trim the additional 'Enter' symbol in received String
+// data.trim(); //Trim function remove the space at the beginning and the ending
+//   return data;
+// }
 
 String getMessage()
 {
@@ -137,63 +168,36 @@ void guiNhietdo()
   sendPacket(chuoiXuat);
 }
 
-String processReceiveMessage(char *packet, int data)
+String processReceiveMessage(char *packet)
 {
-  /*How-to-use
-  receivePacket(packet);
-  Examble:
-  receivePacket("2 bytes from fdde:ad00:beef:0:cf3c:df09:f013:55a1 14152 Hello,World!", 1);
-                 ! -> pointer = 0                                                       ! 1 for data at pointer 0 (bytes sent)
-                              ! -> pointer = 3                                          ! 2 for data at pointer 3 (source address)
-                                                                         ! -> pointer = 5|3 for data at pointer 5 (message)
+  /*
+  Usage: return the message data embedded in the packet
   */
   int pointer = 5;
-  String tampont = "";
   int i = 0;
-
-  switch (data)
-  {
-  case 1:
-    pointer = 0;
-    break;
-  case 2:
-    //NeoSerial.println(data);
-    pointer = 3;
-    break;
-  default:
-    //NeoSerial.println(data);
-    pointer = 5;
-    break;
-  }
-
+  String buffer = "";
+  // NeoSerial.println("Packet:");
+  // NeoSerial.write(packet);
   while (pointer > 0)
   {
     if (packet[i] == ' ') //if appeare a ' ' in sentence reduce pointer => enter a new word
     {
       pointer = pointer - 1; //decrease pointer by 1 to get to value 0
+      NeoSerial.println(pointer);
     }
     i = i + 1; //increase i to go to next charactor
   }
-  while (pointer == 0)
+  if (pointer == 0)
   {
-    if (packet[i] != ' ')
+    while (i < strlen(packet))
     {
-      tampont = tampont + packet[i]; //when not reach " " symbol add char to buffer
-      //NeoSerial.println(tampont);
+      buffer = buffer + packet[i];
+      i++;
     }
-    else
-    {
-      pointer = pointer - 1; // decrease pointer to value -1 to escape from the while loop
-    }
-    i = i + 1; //increase i to go to next charactor
   }
-  if (data == 3) //only remove 3 charactors at the end of the message
-  {
-    tampont.remove(tampont.length() - 3, 3);
-  }
-  return tampont;
+  buffer.trim();        //filter all the space and "Enter" in message
+  return buffer;
 }
-
 /*
 void sendPacket(char *destIpv6Addr, char *message)
 {
