@@ -4,7 +4,7 @@
 //Setup for the temperature sensor DHT11
 #define tempProbe 2
 #define DHTTYPE DHT11
-#define den1 8
+#define denTangtret 8
 DHT dht(tempProbe, DHTTYPE);
 //Global variable
 
@@ -13,8 +13,11 @@ String receiveMessage = "";
 int receiveByte = 0;
 String receiveMessageData;
 static volatile uint16_t count = 0;
-const String moden1 = "groundfloor/light_ON";
-const String tatden1 = "groundfloor/light_OFF";
+
+const char modentangtret[] = "groundfloor/light_ON";
+const char tatdentangtret[] = "groundfloor/light_OFF";
+const char mocuatangtret[] = "groundfloor/door_OPEN";
+const char dongcuatangtret[] = "groundfloor/door_CLOSE";
 
 //Functions
 void guiDoam();
@@ -28,13 +31,16 @@ void setupUDP();
 static void char_received();
 String getMessage();
 String getMessageData();
+void implement();
+void scenario();
+bool compare();
 
 void setup()
 {
   NeoSerial.begin(115200);
   NeoSerial.attachInterrupt(char_received);
   dht.begin();
-  pinMode(den1, OUTPUT); // set pin to output  
+  pinMode(denTangtret, OUTPUT); // set pin to output
   delay(1000);
   setupUDP();
 }
@@ -45,36 +51,56 @@ void loop()
   {
     //wait for serial port to connect.
   }
-  if ((tempget() != 0x00) && (humiget() != 0x00))
+  // if ((tempget() != 0x00) && (humiget() != 0x00))
+  // {
+  //   guiDoam();
+  //   delay(2000);
+  //   guiNhietdo();
+  //   delay(2000);
+  // }
+  if (count > 0)
   {
-    guiDoam();
-    guiNhietdo();
-    delay(6000);
-  }
-  if (receiveMessage != "")
-  {
-    // String goitin = getMessage();
+    delay(20);
     String goitin = receiveMessage;
-    // NeoSerial.println(goitin);
-    receiveMessage = "";
-    char goitinChuoi[90];
-    goitin.toCharArray(goitinChuoi, 90);
-    // NeoSerial.println("Chuoi:");
-    // NeoSerial.write(goitinChuoi);
-    String noidung = processReceiveMessage(goitinChuoi);
-    // String noidung = getMessageData(goitin);
-    NeoSerial.println(noidung);
-    NeoSerial.print("Noi dung lenght: ");
-    NeoSerial.println(noidung.length());
-    if (noidung == moden1)
+    while (receiveMessage.length() > 70)
     {
-      digitalWrite(den1, HIGH); // turn on pullup resistors
-      NeoSerial.println("Da mo den tang tret!");
-    }
-    else if (noidung == tatden1)
-    {
-      digitalWrite(den1, LOW); // turn off pullup resistors
-      NeoSerial.println("Da tat den tang tret!");
+      // getMessage();
+      // NeoSerial.println("---------------------Raw data-----------------------------");
+      // NeoSerial.println(goitin);
+      receiveMessage = "";
+      char goitinChuoi[80];
+      goitin.toCharArray(goitinChuoi, 80);
+      // NeoSerial.println("Chuoi tu raw:");
+      // NeoSerial.write(goitinChuoi);
+      String noidung = "";
+      noidung = processReceiveMessage(goitinChuoi);
+      ////// String noidung = getMessageData(goitin);
+      NeoSerial.println(noidung);
+      // NeoSerial.print("Noi dung lenght: ");
+      // NeoSerial.println(noidung.length());
+      // char noidungChuoi[21];
+      // noidung.toCharArray(noidungChuoi, 21);
+      // scenario(noidungChuoi);
+      if (noidung == "groundfloor/light_ON")
+      {
+        digitalWrite(denTangtret, HIGH);
+      }
+      if (noidung == "groundfloor/light_OFF")
+      {
+        digitalWrite(denTangtret, LOW);
+      }
+
+      // if (strcmp(noidungChuoi, modenTangtret))
+      // {
+      //   digitalWrite(denTangtret, HIGH); // turn on pullup resistors
+      //   // NeoSerial.println("Da mo den tang tret!");
+      // }
+
+      // if (strcmp(noidungChuoi, tatdenTangtret))
+      // {
+      //   digitalWrite(denTangtret, LOW); // turn off pullup resistors
+      //   // NeoSerial.println("Da tat den tang tret!");
+      // }
     }
   }
 }
@@ -104,18 +130,17 @@ String getMessage()
   uint16_t old_count = count;
   count = 0;
   SREG = oldSREG;
-  if (old_count)
-  {
-    NeoSerial.print("\nPayload received: ");
-    NeoSerial.println(old_count - 2); //result is added to 2
-    NeoSerial.print("Message receive: ");
-    NeoSerial.println(receiveMessage);
-  }
-  else
-  {
-    NeoSerial.flush();
-    receiveMessage = "";
-  }
+  // if (old_count)
+  // {
+  //   // NeoSerial.print("\nPayload received: ");
+  //   // NeoSerial.println(old_count - 2); //result is added to 2
+  //   // NeoSerial.print("Message receive: ");
+  //   // NeoSerial.println(receiveMessage);
+  // }
+  // else
+  // {
+  //   NeoSerial.flush();
+  // }
   return receiveMessage;
 }
 
@@ -183,19 +208,21 @@ String processReceiveMessage(char *packet)
     if (packet[i] == ' ') //if appeare a ' ' in sentence reduce pointer => enter a new word
     {
       pointer = pointer - 1; //decrease pointer by 1 to get to value 0
-      NeoSerial.println(pointer);
+      // NeoSerial.println(pointer);
     }
     i = i + 1; //increase i to go to next charactor
   }
   if (pointer == 0)
   {
-    while (i < strlen(packet))
+    while ((i < strlen(packet)) && (packet[i] != ' '))
     {
       buffer = buffer + packet[i];
       i++;
     }
   }
-  buffer.trim();        //filter all the space and "Enter" in message
+  buffer.trim(); //filter all the space and "Enter" in message
+  // NeoSerial.println("Chieu dai buffer:");
+  // NeoSerial.println(buffer.length());
   return buffer;
 }
 /*
