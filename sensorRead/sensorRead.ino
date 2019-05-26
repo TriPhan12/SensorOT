@@ -1,271 +1,235 @@
 #include <DHT.h>
-#include <NeoHWSerial.h>
+
+// Setup buffer size for receiving data
+#define CMDBUFFER_SIZE 120
 
 //Setup for the temperature sensor DHT11
 #define tempProbe 2
 #define DHTTYPE DHT11
-#define denTangtret 8
 DHT dht(tempProbe, DHTTYPE);
-//Global variable
 
-String receiveMessage = "";
-// String sourceAddress = "";
-int receiveByte = 0;
-String receiveMessageData;
-static volatile uint16_t count = 0;
-
-const char modentangtret[] = "groundfloor/light_ON";
-const char tatdentangtret[] = "groundfloor/light_OFF";
-const char mocuatangtret[] = "groundfloor/door_OPEN";
-const char dongcuatangtret[] = "groundfloor/door_CLOSE";
-
-//Functions
-void guiDoam();
-void guiNhietdo();
-String receivePacket();
-void sendPacket();
-char getData();
-float tempget();
-float humiget();
-void setupUDP();
-static void char_received();
-String getMessage();
-String getMessageData();
-void implement();
-void scenario();
-bool compare();
+// Setup for ground floor light control pin
+#define denTangtret 8
 
 void setup()
 {
-  NeoSerial.begin(115200);
-  NeoSerial.attachInterrupt(char_received);
-  dht.begin();
-  pinMode(denTangtret, OUTPUT); // set pin to output
-  delay(1000);
-  setupUDP();
+    Serial.begin(115200);
+    dht.begin();
+    pinMode(denTangtret, OUTPUT); // set pin to output
+    delay(1000);
+    setupUDP();
 }
-
 void loop()
 {
-  while (!NeoSerial)
-  {
-    //wait for serial port to connect.
-  }
-  // if ((tempget() != 0x00) && (humiget() != 0x00))
-  // {
-  //   guiDoam();
-  //   delay(2000);
-  //   guiNhietdo();
-  //   delay(2000);
-  // }
-  if (count > 0)
-  {
-    delay(20);
-    String goitin = receiveMessage;
-    while (receiveMessage.length() > 70)
+    while (!Serial)
     {
-      // getMessage();
-      // NeoSerial.println("---------------------Raw data-----------------------------");
-      // NeoSerial.println(goitin);
-      receiveMessage = "";
-      char goitinChuoi[80];
-      goitin.toCharArray(goitinChuoi, 80);
-      // NeoSerial.println("Chuoi tu raw:");
-      // NeoSerial.write(goitinChuoi);
-      String noidung = "";
-      noidung = processReceiveMessage(goitinChuoi);
-      ////// String noidung = getMessageData(goitin);
-      NeoSerial.println(noidung);
-      // NeoSerial.print("Noi dung lenght: ");
-      // NeoSerial.println(noidung.length());
-      // char noidungChuoi[21];
-      // noidung.toCharArray(noidungChuoi, 21);
-      // scenario(noidungChuoi);
-      if (noidung == "groundfloor/light_ON")
-      {
-        digitalWrite(denTangtret, HIGH);
-      }
-      if (noidung == "groundfloor/light_OFF")
-      {
-        digitalWrite(denTangtret, LOW);
-      }
-
-      // if (strcmp(noidungChuoi, modenTangtret))
-      // {
-      //   digitalWrite(denTangtret, HIGH); // turn on pullup resistors
-      //   // NeoSerial.println("Da mo den tang tret!");
-      // }
-
-      // if (strcmp(noidungChuoi, tatdenTangtret))
-      // {
-      //   digitalWrite(denTangtret, LOW); // turn off pullup resistors
-      //   // NeoSerial.println("Da tat den tang tret!");
-      // }
+        //wait for serial port to connect.
     }
-  }
+    //Send temperature and humidity to thread network
+    // if ((tempget() != 0x00) && (humiget() != 0x00))
+    // {
+    //     guiDoam();
+    //     delay(5000);
+    //     guiNhietdo();
+    //     delay(5000);
+    // }
 }
 
-// String getMessageData(String goitin)
-// {
-//   /*
-//   Function: Return the received broadcasting message in Thread network
-//   */
-//   char chuoiMessage;
-//   NeoSerial.print("noidung: ");
-//   NeoSerial.println(goitin);
-//   goitin.toCharArray(chuoiMessage, 70);
-//   String data = processReceiveMessage(chuoiMessage, 3); //3 for getting message data
-//   NeoSerial.println("-----------------------------");
-//   NeoSerial.println(data);
-// Trim the additional 'Enter' symbol in received String
-// data.trim(); //Trim function remove the space at the beginning and the ending
-//   return data;
-// }
-
-String getMessage()
-{
-  ///Setting up for ISR (Interrupt Service Routetine)
-  uint8_t oldSREG = SREG;
-  noInterrupts();
-  uint16_t old_count = count;
-  count = 0;
-  SREG = oldSREG;
-  // if (old_count)
-  // {
-  //   // NeoSerial.print("\nPayload received: ");
-  //   // NeoSerial.println(old_count - 2); //result is added to 2
-  //   // NeoSerial.print("Message receive: ");
-  //   // NeoSerial.println(receiveMessage);
-  // }
-  // else
-  // {
-  //   NeoSerial.flush();
-  // }
-  return receiveMessage;
-}
-
-static void char_received(uint8_t c)
-{
-  // This is a little naughty, as it will try to block
-  //   in this ISR if the tx_buffer is full.  For this example,
-  //   we are only sending as many characters as we have received,
-  //   and they arrive at the same rate we are sending them.
-  char raw = (char)c;
-  receiveMessage += raw;
-  // NeoSerial.print(raw);
-  // NeoSerial.write(c);
-  count++;
-}
+/*----------------------------------------------
+---------SET UP MODULE CC2538 FUNCTIONS---------
+-----------------------------------------------*/
 
 void setupUDP()
 {
-  NeoSerial.println("udp open");
-  delay(100);
-  NeoSerial.println("udp bind :: 1212");
-  delay(100);
+    Serial.println("udp open");
+    delay(100);
+    Serial.println("udp bind :: 1212");
+    delay(100);
+}
+
+/*----------------------------------------------
+-------RECEIVE AND PROCESSING ARRIVAL DATA------
+-----------------------------------------------*/
+
+void serialEvent()
+{
+    static char cmdBuffer[CMDBUFFER_SIZE] = "";
+    String packet, data;
+    char c, dataChuoi[30];
+    while (Serial.available())
+    {
+        c = processCharInput(cmdBuffer, Serial.read());
+        // Serial.print(c);
+        if (c == '\n')
+        {
+            // Serial.println();
+            //Full command received. Do your stuff here!
+            packet = String(cmdBuffer);
+            char space = ' ';
+            data = getStringPart(packet, space, 5);
+            // Serial.print("Data nhan duoc: ");
+            // Serial.println(data);
+            // Serial.println();
+            data.toCharArray(dataChuoi, 30);
+            if (strcmp("groundfloor/light_ON", dataChuoi) == 0)
+            {
+                // Serial.println("Da mo den tang tret");
+                digitalWrite(denTangtret, HIGH);
+            }
+            if (strcmp("groundfloor/light_OFF", dataChuoi) == 0)
+            {
+                // Serial.println("Da tat den tang tret");
+                digitalWrite(denTangtret, LOW);
+            }
+
+            cmdBuffer[0] = 0;
+        }
+    }
+    delay(1);
+}
+
+char processCharInput(char *cmdBuffer, const char c)
+{
+    //Store the character in the input buffer
+    if (c >= 32 && c <= 126) //Ignore control characters and special ascii characters
+    {
+        if (strlen(cmdBuffer) < CMDBUFFER_SIZE)
+        {
+            strncat(cmdBuffer, &c, 1); //Add it to the buffer
+        }
+        else
+        {
+            return '\n';
+        }
+    }
+    else if ((c == 8 || c == 127) && cmdBuffer[0] != 0) //Backspace
+    {
+
+        cmdBuffer[strlen(cmdBuffer) - 1] = 0;
+    }
+
+    return c;
+}
+
+char processReceiveMessage(char *packet)
+{
+    /*
+  Usage: return the message data embedded in the packet
+  */
+    int pointer = 5;
+    int i = 0;
+    char buffer[30];
+    while (pointer > 0)
+    {
+        if (packet[i] == ' ') //if appeare a ' ' in sentence reduce pointer => enter a new word
+        {
+            pointer = pointer - 1; //decrease pointer by 1 to get to value 0
+        }
+        i = i + 1; //increase i to go to next charactor
+    }
+    if (pointer == 0)
+    {
+        int j = 0;
+        while ((i < strlen(packet)))
+        {
+            buffer[j] = packet[i];
+            i++;
+            j++;
+        }
+    }
+    return buffer;
+}
+
+// splitting a string and return the part index split by separator
+String getStringPart(String data, char separator, int index)
+{
+    int stringData = 0;   //variable to count data part
+    String dataPart = ""; //variable to hole the return text
+
+    for (int i = 0; i < data.length(); i++)
+    { //Walk through the text one letter at a time
+        if (data[i] == separator)
+        {
+            //Count the number of times separator character appears in the text
+            stringData++;
+        }
+        else if (stringData == index)
+        {
+            //get the text when separator is the rignt one
+            dataPart.concat(data[i]);
+        }
+        else if (stringData > index)
+        {
+            //return text and stop if the next separator appears - to save CPU-time
+            return dataPart;
+            break;
+        }
+    }
+    //return text if this is the last part
+    return dataPart;
+}
+
+/*----------------------------------------------
+-----SEND DATA TO THREAD NETWORK FUNCTIONS------
+-----------------------------------------------*/
+
+void guiNhietdo()
+{
+    float nhietdo = tempget();
+    String nhietdoChuoi = "temp_";
+    nhietdoChuoi = nhietdoChuoi + nhietdo;
+    char chuoiXuat[15];
+    nhietdoChuoi.toCharArray(chuoiXuat, 15);
+    nhietdoChuoi = "";
+    sendPacket(chuoiXuat);
 }
 
 void guiDoam()
 {
-  /*
+    /*
   Function: send humidity data read from DHT11 sensor to CC2538 via physical UART port
   Usage: guiDoam();
   */
-  float doam = humiget();
-  String doamChuoi = "doam1_";
-  doamChuoi = doamChuoi + doam;
-  // doamChuoi = "doam_36.23";
-  char chuoiXuat[12];
-  doamChuoi.toCharArray(chuoiXuat, 12);
-  // NeoSerial.println(chuoiXuat);
-  doamChuoi = "";
-  sendPacket(chuoiXuat);
+    float doam = humiget();
+    String doamChuoi = "doam1_";
+    doamChuoi = doamChuoi + doam;
+    // doamChuoi = "doam_36.23";
+    char chuoiXuat[12];
+    doamChuoi.toCharArray(chuoiXuat, 12);
+    doamChuoi = "";
+    sendPacket(chuoiXuat);
 }
 
-void guiNhietdo()
-{
-  float nhietdo = tempget();
-  String nhietdoChuoi = "temp_";
-  nhietdoChuoi = nhietdoChuoi + nhietdo;
-  char chuoiXuat[15];
-  nhietdoChuoi.toCharArray(chuoiXuat, 15);
-  nhietdoChuoi = "";
-  sendPacket(chuoiXuat);
-}
-
-String processReceiveMessage(char *packet)
-{
-  /*
-  Usage: return the message data embedded in the packet
-  */
-  int pointer = 5;
-  int i = 0;
-  String buffer = "";
-  // NeoSerial.println("Packet:");
-  // NeoSerial.write(packet);
-  while (pointer > 0)
-  {
-    if (packet[i] == ' ') //if appeare a ' ' in sentence reduce pointer => enter a new word
-    {
-      pointer = pointer - 1; //decrease pointer by 1 to get to value 0
-      // NeoSerial.println(pointer);
-    }
-    i = i + 1; //increase i to go to next charactor
-  }
-  if (pointer == 0)
-  {
-    while ((i < strlen(packet)) && (packet[i] != ' '))
-    {
-      buffer = buffer + packet[i];
-      i++;
-    }
-  }
-  buffer.trim(); //filter all the space and "Enter" in message
-  // NeoSerial.println("Chieu dai buffer:");
-  // NeoSerial.println(buffer.length());
-  return buffer;
-}
-/*
-void sendPacket(char *destIpv6Addr, char *message)
-{
-//// How-to-use: genaral destination message sending function
-//// sendPacket("address in IPv6","message");
-//// Examble:
-//// sendPacket("fdde:ad00:beef::....","Hello,World!");
-
-  NeoSerial.print("udp send ");
-  NeoSerial.print(destIpv6Addr);
-  NeoSerial.print(" 1212 "); //print the UDP port, this case uses port 1212
-  NeoSerial.println(message);
-  //NeoSerial.write(0x03); //0x03 a.k.a "End of text" in UTF-8
-}
-*/
 void sendPacket(char *message)
 {
-  /*
+    /*
   Function: send mesage to multicast address at port 1212
   Usage: sendPacket("doam1_60.23")
     */
-  NeoSerial.print("udp send ff03::1 1212 ");
-  NeoSerial.println(message);
+    Serial.print("udp send ff03::1 1212 ");
+    Serial.println(message);
 }
+
+/*----------------------------------------------
+--DHT11 TEMPERATURE, HUMIDITY SENSOR FUNCTIONS--
+-----------------------------------------------*/
 
 float tempget()
 {
-  float temp = dht.readTemperature();
-  if (isnan(temp))
-  {
-    temp = 0x00;
-  }
-  return temp;
+    float temp = dht.readTemperature();
+    if (isnan(temp))
+    {
+        temp = 0x00;
+    }
+    return temp;
 }
 
 float humiget()
 {
-  float humi = dht.readHumidity();
-  if (isnan(humi))
-  {
-    humi = 0x00;
-  }
-  return humi;
+    float humi = dht.readHumidity();
+    if (isnan(humi))
+    {
+        humi = 0x00;
+    }
+    return humi;
 }
