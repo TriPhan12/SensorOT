@@ -199,10 +199,10 @@ String getStringPart(String data, char separator, int index)
 void guiNhietdo()
 {
   float nhietdo = tempget();
-  String nhietdoChuoi = "temp_";
+  String nhietdoChuoi = "groundfloor/temp_";
   nhietdoChuoi = nhietdoChuoi + nhietdo;
-  char chuoiXuat[15];
-  nhietdoChuoi.toCharArray(chuoiXuat, 15);
+  char chuoiXuat[26];
+  nhietdoChuoi.toCharArray(chuoiXuat, 26);
   nhietdoChuoi = "";
   sendPacket(chuoiXuat);
 }
@@ -214,11 +214,11 @@ void guiDoam()
   Usage: guiDoam();
   */
   float doam = humiget();
-  String doamChuoi = "doam1_";
+  String doamChuoi = "groundfloor/humid_";
   doamChuoi = doamChuoi + doam;
-  // doamChuoi = "doam_36.23";
-  char chuoiXuat[12];
-  doamChuoi.toCharArray(chuoiXuat, 12);
+  // doamChuoi = "groundfloor/humid_80.50";
+  char chuoiXuat[26];
+  doamChuoi.toCharArray(chuoiXuat, 26);
   doamChuoi = "";
   sendPacket(chuoiXuat);
 }
