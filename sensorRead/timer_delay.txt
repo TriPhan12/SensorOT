@@ -11,33 +11,71 @@ DHT dht(tempProbe, DHTTYPE);
 // Setup for ground floor light control pin
 #define denTangtret 8
 
-unsigned long delayTime = 20000; //20 seconds delay
-unsigned long delayStart = 0;    // the time the delay started
-bool delayRunning = false;       // true if still waiting for delay to finish
+boolean toggle1 = 0;
 
 // Define function using in the program
 
-// void setupUDP();
-// void serialEvent();
-// char processCharInput();
-// char processReceiveMessage();
-// String getStringPart();
-// void guiNhietdo();
-// void guiDoam();
-// void sendPacket();
-// float tempget();
-// float humiget();
+void setupUDP();
+void serialEvent();
+char processCharInput();
+char processReceiveMessage();
+String getStringPart();
+void guiNhietdo();
+void guiDoam();
+void sendPacket();
+float tempget();
+float humiget();
 
 void setup()
 {
-  // Set delay for sending data to Thread Network
-  delayStart = millis(); // start delay
-  delayRunning = true;   // not finished yet
+  /*----------------------------------------------
+  ---------SET UP TIMER 1 TIMER INTERRUPT---------
+  -----------------------------------------------*/
+  cli(); //stop interrupts
+    //set timer1 interrupt at 1Hz
+    TCCR0A = 0; // set entire TCCR1A register to 0
+    TCCR0B = 0; // same for TCCR1B
+    TCNT0 = 0;  //initialize counter value to 0
+    // set compare match register for 1hz increments
+    OCR0A = 15624; // = (16*10^6) / (1*1024) - 1 (must be <65536)
+    // turn on CTC mode
+    TCCR0B |= (1 << WGM12);
+    // Set CS10 and CS12 bits for 1024 prescaler
+    TCCR0B |= (1 << CS12) | (1 << CS10);
+    // enable timer compare interrupt
+    TIMSK0 |= (1 << OCIE1A);
+  sei(); //allow interrupts
+
   Serial.begin(115200);
   dht.begin();
   pinMode(denTangtret, OUTPUT); // set pin to output
   delay(1000);
   setupUDP();
+}
+
+/*----------------------------------------------
+-----SET UP SENDING DATA TEMP AND HUMIDITY------
+-----------------------------------------------*/
+
+ISR(TIMER0_COMPA_vect)
+{ //timer1 interrupt 1Hz toggles pin 13 (LED)
+  //generates pulse wave of frequency 1Hz/2 = 0.5kHz (takes two cycles for full wave- toggle high then toggle low)
+  if (toggle1)
+  {
+    if (tempget() != 0x00)
+    {
+      guiNhietdo();
+    }
+    toggle1 = 0;
+  }
+  else
+  {
+    if (humiget() != 0x00)
+    {
+      guiDoam();
+    }
+    toggle1 = 1;
+  }
 }
 
 void loop()
@@ -46,17 +84,9 @@ void loop()
   {
     //wait for serial port to connect.
   }
-  // check if delay has timed out after 10sec == 10000ms
-  if (delayRunning && ((millis() - delayStart) >= delayTime))
-  {
-    if ((tempget() != 0x00) && (humiget() != 0x00))
-    {
-      guiDoam();
-      guiNhietdo();
-    }
-    delayStart = millis();
-  }
 }
+
+
 
 /*----------------------------------------------
 ---------SET UP MODULE CC2538 FUNCTIONS---------
@@ -104,8 +134,8 @@ void serialEvent()
         // Serial.println("Da tat den tang tret");
         digitalWrite(denTangtret, LOW);
       }
-      c = "";
-      memset(cmdBuffer, 0, sizeof(cmdBuffer));        // reset all the charactor in cmdBuffer
+
+      cmdBuffer[0] = 0;
     }
   }
   delay(1);
@@ -199,10 +229,10 @@ String getStringPart(String data, char separator, int index)
 void guiNhietdo()
 {
   float nhietdo = tempget();
-  String nhietdoChuoi = "groundfloor/temp_";
+  String nhietdoChuoi = "temp_";
   nhietdoChuoi = nhietdoChuoi + nhietdo;
-  char chuoiXuat[26];
-  nhietdoChuoi.toCharArray(chuoiXuat, 26);
+  char chuoiXuat[15];
+  nhietdoChuoi.toCharArray(chuoiXuat, 15);
   nhietdoChuoi = "";
   sendPacket(chuoiXuat);
 }
@@ -214,11 +244,11 @@ void guiDoam()
   Usage: guiDoam();
   */
   float doam = humiget();
-  String doamChuoi = "groundfloor/humid_";
+  String doamChuoi = "doam1_";
   doamChuoi = doamChuoi + doam;
-  // doamChuoi = "groundfloor/humid_80.50";
-  char chuoiXuat[26];
-  doamChuoi.toCharArray(chuoiXuat, 26);
+  // doamChuoi = "doam_36.23";
+  char chuoiXuat[12];
+  doamChuoi.toCharArray(chuoiXuat, 12);
   doamChuoi = "";
   sendPacket(chuoiXuat);
 }
