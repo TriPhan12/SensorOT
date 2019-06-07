@@ -5,21 +5,37 @@
 // Setup buffer size for receiving data
 #define CMDBUFFER_SIZE 120
 
-//Setup for the temperature sensor DHT11
+//////////////////////////////////////////////////
+////// Setup for DHT11 temperature sensor  ///////
+//////////////////////////////////////////////////
+
 #define tempProbe 2
 #define DHTTYPE DHT11
 DHT dht(tempProbe, DHTTYPE);
 
+//////////////////////////////////////////////////
+/////// Setup for MQ135 air quality sensor  //////
+//////////////////////////////////////////////////
 #define PIN_MQ135 A2 //define the analog input pin for MQ135 air quality sensor
 MQ135 airSensor = MQ135(PIN_MQ135);
 
-Servo door; // create servo object to control a servo
+//////////////////////////////////////////////////
+///////////// Setup for Servo Moto  //////////////
+//////////////////////////////////////////////////
 
+Servo door;           // create servo object to control a servo
+int doorPosition = 0; // variable to store the servo position
+bool cua = true;
+//////////////////////////////////////////////////
+///////////  Setup for light control  ////////////
+//////////////////////////////////////////////////
 // Setup for ground floor and first floor light control pins
 #define denTangtret 8
 #define denLau1 13
+
 //////////////////////////////////////////////////
 /////// Assign sensor using in the network ///////
+//////////////////////////////////////////////////
 
 /////////////// For ground floor /////////////////
 bool groundfloor_tempAndhumid = true;
@@ -47,20 +63,20 @@ void setup()
   Serial.begin(115200);
   dht.begin();
   door.attach(9);               // attaches the servo on pin 9 to control the door
+  door.write(0);
   pinMode(denTangtret, OUTPUT); // set pin to denTangtret
   pinMode(denLau1, OUTPUT);     // set pin to denLau1
 
   delay(500);
   setupUDP();
 }
-
 void loop()
 {
   while (!Serial)
   {
     //wait for serial port to connect.
-  }
-  // check if delay has timed out after 10sec == 10000ms
+  }  
+  // check if delay has timed out after delayTime
   if ((groundfloor_tempAndhumid) || (firstfloor_tempAndhumid))
   {
     if (delayRunning && ((millis() - delayStart) >= delayTime))
@@ -70,6 +86,19 @@ void loop()
         guiDoam();
         guiNhietdo();
         guiChatluongKhongKhi();
+        delay(1000);
+        if (cua)
+        {
+          Serial.println("Openning door!!!");
+          doorControl("open");
+          cua = false;
+        }
+        else
+        {
+          Serial.println("Closing door!!!");
+          doorControl("close");
+          cua = true;
+        }
       }
       delayStart = millis();
     }
@@ -346,10 +375,21 @@ void doorControl(char *action)
   if (strcmp("open", action) == 0)
   {
     // Open the door
-    
+    for (doorPosition = 0; doorPosition <= 150; doorPosition += 1)
+    // goes from 0 degrees to 150 degrees
+    {                           // in steps of 1 degree
+      door.write(doorPosition); // tell servo to go to position in variable 'pos'
+      delay(15);                // waits 15ms for the servo to reach the position
+    }
   }
   if (strcmp("close", action) == 0)
   {
     // Close the door
+    for (doorPosition = 150; doorPosition >= 0; doorPosition -= 1)
+    // goes from 150 degrees to 0 degrees
+    {                           // in steps of 1 degree
+      door.write(doorPosition); // tell servo to go to position in variable 'pos'
+      delay(15);                // waits 15ms for the servo to reach the position
+    }
   }
 }
