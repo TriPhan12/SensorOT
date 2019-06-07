@@ -1,9 +1,0 @@
- 2 bytes from fdde:ad00:beef:0:cf3c:df09:f013:55a1 14152 groundfloor/light_ON
-
-20 bytes from fd11:1111:1122:0:8a9b:9ebe:a481:3b3c 49152 groundfloor/light_OFF
-20 bytes from fd11:1111:1122:0:8a9b:9ebe:a481:3b3c 49152 groundfloor/light_ON
-
-20 bytes from fd11:1111:1122:0:8a9b:9ebe:a481:3b3c 1212 groundfloor/light_ON
-
-udp send ff03::1 1212 groundfloor/light_ON
-20 bytes from fd11:1111:1122:0:8a9b:9ebe:a481:3b3c 1212 groundfloor/light_ON
