@@ -126,20 +126,20 @@ void serialEvent()
           digitalWrite(denTangtret, LOW);
         }
       }
-      if (groundfloor_door)
+      else if (groundfloor_door)
       {
-        if (strcmp("groundfloor/door_OPEN", dataChuoi) == 0)
+        if (strcmp("groundfloor/door_ON", dataChuoi) == 0)
         {
           // Serial.println("Da mo cua tang tret");
           doorControl('open');
         }
-        if (strcmp("groundfloor/light_CLOSE", dataChuoi) == 0)
+        if (strcmp("groundfloor/door_OFF", dataChuoi) == 0)
         {
           // Serial.println("Da dong cua tang tret");
           doorControl('close');
         }
       }
-      if (firstfloor_light)
+      else if (firstfloor_light)
       {
         if (strcmp("firstfloor/light_ON", dataChuoi) == 0)
         {
@@ -152,7 +152,6 @@ void serialEvent()
           digitalWrite(denLau1, LOW);
         }
       }
-      // if ()
       memset(cmdBuffer, 0, sizeof(cmdBuffer)); // reset all the charactor in cmdBuffer
     }
   }
@@ -347,6 +346,7 @@ void doorControl(char *action)
   if (strcmp("open", action) == 0)
   {
     // Open the door
+    
   }
   if (strcmp("close", action) == 0)
   {
