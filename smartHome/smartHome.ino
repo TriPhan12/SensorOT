@@ -21,11 +21,10 @@ MQ135 airSensor = MQ135(PIN_MQ135);
 
 //////////////////////////////////////////////////
 ///////////// Setup for Servo Moto  //////////////
-//////////////////////////////////////////////////
-
+//////////////////////////////////////////////////s
 Servo door;           // create servo object to control a servo
 int doorPosition = 0; // variable to store the servo position
-bool cua = true;
+
 //////////////////////////////////////////////////
 ///////////  Setup for light control  ////////////
 //////////////////////////////////////////////////
@@ -62,7 +61,7 @@ void setup()
   delayRunning = true;   // not finished yet
   Serial.begin(115200);
   dht.begin();
-  door.attach(9);               // attaches the servo on pin 9 to control the door
+  door.attach(9); // attaches the servo on pin 9 to control the door
   door.write(0);
   pinMode(denTangtret, OUTPUT); // set pin to denTangtret
   pinMode(denLau1, OUTPUT);     // set pin to denLau1
@@ -75,7 +74,7 @@ void loop()
   while (!Serial)
   {
     //wait for serial port to connect.
-  }  
+  }
   // check if delay has timed out after delayTime
   if ((groundfloor_tempAndhumid) || (firstfloor_tempAndhumid))
   {
@@ -87,18 +86,6 @@ void loop()
         guiNhietdo();
         guiChatluongKhongKhi();
         delay(1000);
-        if (cua)
-        {
-          Serial.println("Openning door!!!");
-          doorControl("open");
-          cua = false;
-        }
-        else
-        {
-          Serial.println("Closing door!!!");
-          doorControl("close");
-          cua = true;
-        }
       }
       delayStart = millis();
     }
@@ -155,20 +142,20 @@ void serialEvent()
           digitalWrite(denTangtret, LOW);
         }
       }
-      else if (groundfloor_door)
+      if (groundfloor_door)
       {
         if (strcmp("groundfloor/door_ON", dataChuoi) == 0)
         {
           // Serial.println("Da mo cua tang tret");
-          doorControl('open');
+          doorControl("open");
         }
         if (strcmp("groundfloor/door_OFF", dataChuoi) == 0)
         {
           // Serial.println("Da dong cua tang tret");
-          doorControl('close');
+          doorControl("close");
         }
       }
-      else if (firstfloor_light)
+      if (firstfloor_light)
       {
         if (strcmp("firstfloor/light_ON", dataChuoi) == 0)
         {
