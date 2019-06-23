@@ -9,9 +9,11 @@
 ////// Setup for DHT11 temperature sensor  ///////
 //////////////////////////////////////////////////
 
-#define tempProbe 2
+#define tempGround 11
+#define tempFirst 12
 #define DHTTYPE DHT11
-DHT dht(tempProbe, DHTTYPE);
+DHT dht(tempFirst, DHTTYPE);
+
 
 //////////////////////////////////////////////////
 /////// Setup for MQ135 air quality sensor  //////
@@ -22,24 +24,25 @@ MQ135 airSensor = MQ135(PIN_MQ135);
 //////////////////////////////////////////////////
 ///////////// Setup for Servo Moto  //////////////
 //////////////////////////////////////////////////s
-Servo door;           // create servo object to control a servo
-int doorPosition = 0; // variable to store the servo position
-
+Servo door;            // create servo object to control a servo
+int doorPosition = 0;  // variable to store the servo position
+int minPosition = 0;    //Angle the door close
+int maxPosition = 150; //Angle the door open
 //////////////////////////////////////////////////
 ///////////  Setup for light control  ////////////
 //////////////////////////////////////////////////
 // Setup for ground floor and first floor light control pins
-#define denTangtret 8
-#define denLau1 13
+#define denTangtret 4
+#define denLau1 7
 
 //////////////////////////////////////////////////
 /////// Assign sensor using in the network ///////
 //////////////////////////////////////////////////
 
 /////////////// For ground floor /////////////////
-bool groundfloor_tempAndhumid = true;
-bool groundfloor_light = true;
-bool groundfloor_door = true;
+bool groundfloor_tempAndhumid = false;
+bool groundfloor_light = false;
+bool groundfloor_door = false;
 
 //////////////// For first floor /////////////////
 bool firstfloor_tempAndhumid = true;
@@ -85,7 +88,6 @@ void loop()
         guiDoam();
         guiNhietdo();
         guiChatluongKhongKhi();
-        delay(1000);
       }
       delayStart = millis();
     }
@@ -144,12 +146,12 @@ void serialEvent()
       }
       if (groundfloor_door)
       {
-        if (strcmp("groundfloor/door_ON", dataChuoi) == 0)
+        if ((strcmp("groundfloor/door_ON", dataChuoi) == 0) && (doorPosition < (minPosition + 10)))
         {
           // Serial.println("Da mo cua tang tret");
           doorControl("open");
         }
-        if (strcmp("groundfloor/door_OFF", dataChuoi) == 0)
+        if ((strcmp("groundfloor/door_OFF", dataChuoi) == 0) && (doorPosition > (maxPosition - 10)))
         {
           // Serial.println("Da dong cua tang tret");
           doorControl("close");
@@ -362,7 +364,7 @@ void doorControl(char *action)
   if (strcmp("open", action) == 0)
   {
     // Open the door
-    for (doorPosition = 0; doorPosition <= 150; doorPosition += 1)
+    for (doorPosition = 0; doorPosition <= maxPosition; doorPosition += 1)
     // goes from 0 degrees to 150 degrees
     {                           // in steps of 1 degree
       door.write(doorPosition); // tell servo to go to position in variable 'pos'
@@ -372,7 +374,7 @@ void doorControl(char *action)
   if (strcmp("close", action) == 0)
   {
     // Close the door
-    for (doorPosition = 150; doorPosition >= 0; doorPosition -= 1)
+    for (doorPosition = 150; doorPosition >= minPosition; doorPosition -= 1)
     // goes from 150 degrees to 0 degrees
     {                           // in steps of 1 degree
       door.write(doorPosition); // tell servo to go to position in variable 'pos'
