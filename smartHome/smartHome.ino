@@ -26,8 +26,8 @@ MQ135 airSensor = MQ135(PIN_MQ135);
 //////////////////////////////////////////////////s
 Servo door;            // create servo object to control a servo
 int doorPosition = 0;  // variable to store the servo position
-int minPosition = 0;    //Angle the door close
-int maxPosition = 150; //Angle the door open
+int minPosition = 35;    //Angle the door close
+int maxPosition = 125; //Angle the door open
 //////////////////////////////////////////////////
 ///////////  Setup for light control  ////////////
 //////////////////////////////////////////////////
@@ -65,7 +65,7 @@ void setup()
   Serial.begin(115200);
   dht.begin();
   door.attach(9); // attaches the servo on pin 9 to control the door
-  door.write(0);
+  door.write(minPosition);
   pinMode(denTangtret, OUTPUT); // set pin to denTangtret
   pinMode(denLau1, OUTPUT);     // set pin to denLau1
 
@@ -364,7 +364,7 @@ void doorControl(char *action)
   if (strcmp("open", action) == 0)
   {
     // Open the door
-    for (doorPosition = 0; doorPosition <= maxPosition; doorPosition += 1)
+    for (doorPosition = minPosition; doorPosition <= maxPosition; doorPosition += 1)
     // goes from 0 degrees to 150 degrees
     {                           // in steps of 1 degree
       door.write(doorPosition); // tell servo to go to position in variable 'pos'
@@ -374,7 +374,7 @@ void doorControl(char *action)
   if (strcmp("close", action) == 0)
   {
     // Close the door
-    for (doorPosition = 150; doorPosition >= minPosition; doorPosition -= 1)
+    for (doorPosition = maxPosition; doorPosition >= minPosition; doorPosition -= 1)
     // goes from 150 degrees to 0 degrees
     {                           // in steps of 1 degree
       door.write(doorPosition); // tell servo to go to position in variable 'pos'
