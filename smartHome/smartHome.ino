@@ -160,12 +160,12 @@ void serialEvent()
       {
         if (strcmp("firstfloor/light_ON", dataChuoi) == 0)
         {
-          Serial.println("Da mo den tang 1");
+          // Serial.println("Da mo den tang 1");
           digitalWrite(denLau1, HIGH);
         }
         if (strcmp("firstfloor/light_OFF", dataChuoi) == 0)
         {
-          Serial.println("Da tat den tang 1");
+          // Serial.println("Da tat den tang 1");
           digitalWrite(denLau1, LOW);
         }
       }
