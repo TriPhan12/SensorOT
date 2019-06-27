@@ -14,7 +14,6 @@
 #define DHTTYPE DHT11
 DHT dht(tempFirst, DHTTYPE);
 
-
 //////////////////////////////////////////////////
 /////// Setup for MQ135 air quality sensor  //////
 //////////////////////////////////////////////////
@@ -26,7 +25,7 @@ MQ135 airSensor = MQ135(PIN_MQ135);
 //////////////////////////////////////////////////s
 Servo door;            // create servo object to control a servo
 int doorPosition = 0;  // variable to store the servo position
-int minPosition = 35;    //Angle the door close
+int minPosition = 35;  //Angle the door close
 int maxPosition = 125; //Angle the door open
 //////////////////////////////////////////////////
 ///////////  Setup for light control  ////////////
@@ -161,12 +160,12 @@ void serialEvent()
       {
         if (strcmp("firstfloor/light_ON", dataChuoi) == 0)
         {
-          // Serial.println("Da mo den tang 1");
+          Serial.println("Da mo den tang 1");
           digitalWrite(denLau1, HIGH);
         }
         if (strcmp("firstfloor/light_OFF", dataChuoi) == 0)
         {
-          // Serial.println("Da tat den tang 1");
+          Serial.println("Da tat den tang 1");
           digitalWrite(denLau1, LOW);
         }
       }
