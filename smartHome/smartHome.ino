@@ -32,7 +32,7 @@ int maxPosition = 125; //Angle the door open
 //////////////////////////////////////////////////
 // Setup for ground floor and first floor light control pins
 #define denTangtret 4
-#define denLau1 7
+#define denLau 7
 
 //////////////////////////////////////////////////
 /////// Assign sensor using in the network ///////
@@ -66,7 +66,7 @@ void setup()
   door.attach(9); // attaches the servo on pin 9 to control the door
   door.write(minPosition);
   pinMode(denTangtret, OUTPUT); // set pin to denTangtret
-  pinMode(denLau1, OUTPUT);     // set pin to denLau1
+  pinMode(denLau, OUTPUT);     // set pin to denLau1
 
   delay(500);
   setupUDP();
@@ -87,6 +87,7 @@ void loop()
         guiDoam();
         guiNhietdo();
         guiChatluongKhongKhi();
+        delay(10);
       }
       delayStart = millis();
     }
@@ -130,43 +131,17 @@ void serialEvent()
       // Serial.println(data);
       // Serial.println();
       data.toCharArray(dataChuoi, 30);
-      if (groundfloor_light)
-      {
-        if (strcmp("groundfloor/light_ON", dataChuoi) == 0)
-        {
-          // Serial.println("Da mo den tang tret");
-          digitalWrite(denTangtret, HIGH);
-        }
-        if (strcmp("groundfloor/light_OFF", dataChuoi) == 0)
-        {
-          // Serial.println("Da tat den tang tret");
-          digitalWrite(denTangtret, LOW);
-        }
-      }
-      if (groundfloor_door)
-      {
-        if ((strcmp("groundfloor/door_ON", dataChuoi) == 0) && (doorPosition < (minPosition + 10)))
-        {
-          // Serial.println("Da mo cua tang tret");
-          doorControl("open");
-        }
-        if ((strcmp("groundfloor/door_OFF", dataChuoi) == 0) && (doorPosition > (maxPosition - 10)))
-        {
-          // Serial.println("Da dong cua tang tret");
-          doorControl("close");
-        }
-      }
       if (firstfloor_light)
       {
         if (strcmp("firstfloor/light_ON", dataChuoi) == 0)
         {
           // Serial.println("Da mo den tang 1");
-          digitalWrite(denLau1, HIGH);
+          digitalWrite(denLau, HIGH);
         }
         if (strcmp("firstfloor/light_OFF", dataChuoi) == 0)
         {
           // Serial.println("Da tat den tang 1");
-          digitalWrite(denLau1, LOW);
+          digitalWrite(denLau, LOW);
         }
       }
       memset(cmdBuffer, 0, sizeof(cmdBuffer)); // reset all the charactor in cmdBuffer
